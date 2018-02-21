@@ -79,8 +79,12 @@ func main() {
 		if err != nil {
 			log.Println("error creating output file: ", err)
 		}
-		body := blackfriday.MarkdownCommon([]byte("foo **bar** bat"))
-		_, err = o.WriteString(strings.Join([]string{header(dir), string(body), footer(dir)}, "\n"))
+		b, err := ioutil.ReadFile(f)
+		if err != nil {
+			log.Println("error reading input file: ", err)
+		}
+		body := string(blackfriday.MarkdownCommon(b))
+		_, err = o.WriteString(strings.Join([]string{header(dir), body, footer(dir)}, "\n"))
 		if err != nil {
 			log.Println("error writing to output file: ", err)
 		}
