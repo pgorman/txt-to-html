@@ -3,16 +3,24 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
-	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/russross/blackfriday"
 )
 
+// anchor turns a file name into an HTML link/anchor.
+func anchor(s string) string {
+	// TODO format link
+	return strings.Join([]string{"<a href=\"", s, "\">", s, "</a><br />\n"}, "")
+}
+
+// header returns the start of an HTML document.
 func header(dir string) string {
 	var header string
 	f := path.Join(dir, "HEADER.html")
@@ -35,6 +43,7 @@ func header(dir string) string {
 	return header
 }
 
+// footer returns the end of an HTML document.
 func footer(dir string) string {
 	var footer string
 	f := path.Join(dir, "FOOTER.html")
@@ -53,7 +62,7 @@ func footer(dir string) string {
 
 func main() {
 	var dir string
-	generateIndex := flag.Bool("i", false, "Generate index.html listing files in the directory.")
+	makeIndex := flag.Bool("i", false, "Generate index.html that lists the directory contents.")
 	flag.Parse()
 	switch len(flag.Args()) {
 	case 1:
@@ -65,45 +74,50 @@ func main() {
 		log.Fatal("please supply a directory for input/output")
 	}
 
-	txt, err := filepath.Glob(path.Join(dir, "*.txt"))
+	indexLinks := make([]string, 0, 100)
+	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		log.Fatal("error finding .txt input files: ", err)
+		log.Println("failed to read contents of input/output directory")
 	}
-	md, err := filepath.Glob(path.Join(dir, "*.md"))
-	if err != nil {
-		log.Fatal("error finding .md input files: ", err)
-	}
-
-	files := append(txt, md...)
 	for _, f := range files {
-		o, err := os.Create(path.Join(strings.Join([]string{f, "html"}, ".")))
-		if err != nil {
-			log.Println("error creating output file: ", err)
+		if strings.HasPrefix(f.Name(), ".") {
+			continue
 		}
-		b, err := ioutil.ReadFile(f)
-		if err != nil {
-			log.Println("error reading input file: ", err)
+		if f.IsDir() && *makeIndex {
+			indexLinks = append(indexLinks, anchor(strings.Join([]string{f.Name(), "/"}, "")))
+			continue
 		}
-		body := string(blackfriday.MarkdownCommon(b))
-		_, err = o.WriteString(strings.Join([]string{header(dir), body, footer(dir)}, "\n"))
-		if err != nil {
-			log.Println("error writing to output file: ", err)
-		}
-		o.Close()
-	}
-
-	// TODO Use ioutil.ReadDir to get a lit of all the files above, instead of using filepath.Glog.
-
-	if *generateIndex {
-		a, err := ioutil.ReadDir(dir)
-		if err != nil {
-			log.Println("failed to find files for index: ", err)
-		}
-		for _, f := range a {
-			log.Println(f.Name())
-			if f.IsDir() {
-				log.Println("DIRECTORY", f.Name())
+		if strings.HasSuffix(f.Name(), ".txt") || strings.HasSuffix(f.Name(), ".md") {
+			b, err := ioutil.ReadFile(path.Join(dir, f.Name()))
+			if err != nil {
+				log.Println("error reading input file: ", err)
+			}
+			body := string(blackfriday.MarkdownCommon(b))
+			n := strings.Join([]string{f.Name(), "html"}, ".")
+			o, err := os.Create(path.Join(dir, n))
+			if err != nil {
+				log.Println("error creating output file: ", err)
+			}
+			_, err = o.WriteString(strings.Join([]string{header(dir), body, footer(dir)}, "\n"))
+			if err != nil {
+				log.Println("error writing to output file: ", err)
+			}
+			o.Close()
+			if *makeIndex {
+				indexLinks = append(indexLinks, anchor(n))
 			}
 		}
 	}
+
+	sort.Strings(indexLinks)
+	indexFile, err := os.Create(path.Join(dir, "index.html"))
+	if err != nil {
+		log.Println("error creating index.html file: ", err)
+	}
+	fmt.Fprintf(indexFile, header(dir))
+	for _, a := range indexLinks {
+		fmt.Fprintf(indexFile, a)
+	}
+	fmt.Fprintf(indexFile, footer(dir))
+	indexFile.Close()
 }
