@@ -16,7 +16,6 @@ import (
 
 // anchor turns a file name into an HTML link/anchor.
 func anchor(s string) string {
-	// TODO format link
 	return strings.Join([]string{"<a href=\"", s, "\">", s, "</a><br />\n"}, "")
 }
 
@@ -80,11 +79,15 @@ func main() {
 		log.Println("failed to read contents of input/output directory")
 	}
 	for _, f := range files {
-		if strings.HasPrefix(f.Name(), ".") {
+		if strings.HasPrefix(f.Name(), ".") || f.Name() == "index.html" || strings.HasPrefix(f.Name(), "HEAD") || strings.HasPrefix(f.Name(), "FOOT") {
 			continue
 		}
 		if f.IsDir() && *makeIndex {
 			indexLinks = append(indexLinks, anchor(strings.Join([]string{f.Name(), "/"}, "")))
+			continue
+		}
+		if !strings.HasSuffix(f.Name(), ".txt.html") && !strings.HasSuffix(f.Name(), ".md.html") && strings.HasSuffix(f.Name(), ".html") {
+			indexLinks = append(indexLinks, anchor(f.Name()))
 			continue
 		}
 		if strings.HasSuffix(f.Name(), ".txt") || strings.HasSuffix(f.Name(), ".md") {
