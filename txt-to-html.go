@@ -79,15 +79,11 @@ func main() {
 		log.Println("failed to read contents of input/output directory")
 	}
 	for _, f := range files {
-		if strings.HasPrefix(f.Name(), ".") || f.Name() == "index.html" || strings.HasPrefix(f.Name(), "HEAD") || strings.HasPrefix(f.Name(), "FOOT") {
+		if strings.HasPrefix(f.Name(), ".") || strings.HasPrefix(f.Name(), "index.") || strings.HasPrefix(f.Name(), "HEAD") || strings.HasPrefix(f.Name(), "FOOT") {
 			continue
 		}
-		if f.IsDir() && *makeIndex {
+		if *makeIndex && f.IsDir() {
 			indexLinks = append(indexLinks, anchor(strings.Join([]string{f.Name(), "/"}, "")))
-			continue
-		}
-		if !strings.HasSuffix(f.Name(), ".txt.html") && !strings.HasSuffix(f.Name(), ".md.html") && strings.HasSuffix(f.Name(), ".html") {
-			indexLinks = append(indexLinks, anchor(f.Name()))
 			continue
 		}
 		if strings.HasSuffix(f.Name(), ".txt") || strings.HasSuffix(f.Name(), ".md") {
@@ -96,8 +92,7 @@ func main() {
 				log.Println("error reading input file: ", err)
 			}
 			body := string(blackfriday.MarkdownCommon(b))
-			n := strings.Join([]string{f.Name(), "html"}, ".")
-			o, err := os.Create(path.Join(dir, n))
+			o, err := os.Create(path.Join(dir, strings.Join([]string{f.Name(), "html"}, ".")))
 			if err != nil {
 				log.Println("error creating output file: ", err)
 			}
@@ -106,21 +101,23 @@ func main() {
 				log.Println("error writing to output file: ", err)
 			}
 			o.Close()
-			if *makeIndex {
-				indexLinks = append(indexLinks, anchor(n))
-			}
+		}
+		if *makeIndex && !strings.HasSuffix(f.Name(), ".txt") && !strings.HasSuffix(f.Name(), ".md") {
+			indexLinks = append(indexLinks, anchor(f.Name()))
 		}
 	}
 
-	sort.Strings(indexLinks)
-	indexFile, err := os.Create(path.Join(dir, "index.html"))
-	if err != nil {
-		log.Println("error creating index.html file: ", err)
+	if *makeIndex {
+		sort.Strings(indexLinks)
+		indexFile, err := os.Create(path.Join(dir, "index.html"))
+		if err != nil {
+			log.Println("error creating index.html file: ", err)
+		}
+		fmt.Fprintf(indexFile, header(dir))
+		for _, a := range indexLinks {
+			fmt.Fprintf(indexFile, a)
+		}
+		fmt.Fprintf(indexFile, footer(dir))
+		indexFile.Close()
 	}
-	fmt.Fprintf(indexFile, header(dir))
-	for _, a := range indexLinks {
-		fmt.Fprintf(indexFile, a)
-	}
-	fmt.Fprintf(indexFile, footer(dir))
-	indexFile.Close()
 }
