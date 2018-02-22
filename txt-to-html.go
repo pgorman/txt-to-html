@@ -53,6 +53,7 @@ func footer(dir string) string {
 
 func main() {
 	var dir string
+	generateIndex := flag.Bool("i", false, "Generate index.html listing files in the directory.")
 	flag.Parse()
 	switch len(flag.Args()) {
 	case 1:
@@ -89,5 +90,20 @@ func main() {
 			log.Println("error writing to output file: ", err)
 		}
 		o.Close()
+	}
+
+	// TODO Use ioutil.ReadDir to get a lit of all the files above, instead of using filepath.Glog.
+
+	if *generateIndex {
+		a, err := ioutil.ReadDir(dir)
+		if err != nil {
+			log.Println("failed to find files for index: ", err)
+		}
+		for _, f := range a {
+			log.Println(f.Name())
+			if f.IsDir() {
+				log.Println("DIRECTORY", f.Name())
+			}
+		}
 	}
 }
