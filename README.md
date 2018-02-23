@@ -9,6 +9,8 @@ For example, an input file named `coolnotes.txt` will generate an output file na
 
 If the files `HEADER.html` and `FOOTER.html` exist in the directory, they will be prepended and appended to the output documents.
 
+Supplying the `-i` flag generates an `index.html` file in the output directory.
+
 License (2-clause BSD)
 ----------------------------------------------------------------------------
 
