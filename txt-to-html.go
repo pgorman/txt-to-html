@@ -16,7 +16,7 @@ import (
 
 // anchor turns a file name into an HTML link/anchor.
 func anchor(s string) string {
-	return strings.Join([]string{"<a href=\"", s, "\">", s, "</a><br />\n"}, "")
+	return strings.Join([]string{`<li><a href="`, s, `">`, s, "</a></li>"}, "")
 }
 
 // header returns the start of an HTML document.
@@ -114,9 +114,11 @@ func main() {
 			log.Println("error creating index.html file: ", err)
 		}
 		fmt.Fprintf(indexFile, header(dir))
+		fmt.Fprintln(indexFile, `<ul class="filelist">`)
 		for _, a := range indexLinks {
-			fmt.Fprintf(indexFile, a)
+			fmt.Fprintln(indexFile, a)
 		}
+		fmt.Fprintln(indexFile, "</ul>")
 		fmt.Fprintf(indexFile, footer(dir))
 		indexFile.Close()
 	}
