@@ -11,7 +11,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/russross/blackfriday"
+	blackfriday "gopkg.in/russross/blackfriday.v2"
 )
 
 // anchor turns a file name into an HTML link/anchor.
@@ -91,7 +91,7 @@ func main() {
 			if err != nil {
 				log.Println("error reading input file: ", err)
 			}
-			body := string(blackfriday.MarkdownCommon(b))
+			body := string(blackfriday.Run(b, blackfriday.WithExtensions(blackfriday.CommonExtensions|blackfriday.AutoHeadingIDs)))
 			o, err := os.Create(path.Join(dir, strings.Join([]string{f.Name(), "html"}, ".")))
 			if err != nil {
 				log.Println("error creating output file: ", err)
