@@ -83,6 +83,9 @@ func main() {
 		if strings.HasPrefix(f.Name(), ".") || strings.HasPrefix(f.Name(), "index.") || strings.HasPrefix(f.Name(), "HEAD") || strings.HasPrefix(f.Name(), "FOOT") {
 			continue
 		}
+		if strings.HasSuffix(f.Name(), ".txt.html") || strings.HasSuffix(f.Name(), ".md.html") {
+			continue
+		}
 		if *makeIndex && f.IsDir() {
 			indexLinks = append(indexLinks, anchor(strings.Join([]string{f.Name(), "/"}, "")))
 			continue
@@ -97,11 +100,11 @@ func main() {
 			if *clobber {
 				fn = strings.TrimSuffix(f.Name(), ".txt")
 				fn = strings.TrimSuffix(fn, ".md")
-				fmt.Println(fn)
+				fn = strings.Join([]string{fn, "html"}, ".")
 			} else {
-				fn = f.Name()
+				fn = strings.Join([]string{f.Name(), "html"}, ".")
 			}
-			o, err := os.Create(path.Join(dir, strings.Join([]string{fn, "html"}, ".")))
+			o, err := os.Create(path.Join(dir, fn))
 			if err != nil {
 				log.Println("error creating output file: ", err)
 			}
@@ -113,6 +116,10 @@ func main() {
 			if *makeIndex {
 				indexLinks = append(indexLinks, anchor(fn))
 			}
+			continue
+		}
+		if *makeIndex {
+			indexLinks = append(indexLinks, anchor(f.Name()))
 		}
 	}
 
