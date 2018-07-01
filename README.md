@@ -11,6 +11,9 @@ If the files `HEADER.html` and `FOOTER.html` exist in the directory, they will b
 
 Supplying the `-i` flag generates an `index.html` file in the output directory.
 
+Supplying the `-c` flag will substitute `.html` for the file name extension instead of appending, and clobber any existing HTML file with that name. Without the `-c` flag, input `file.txt` will output `file.txt.html`. With the flag, input `file.txt` will output to `file.html`.
+
+
 License (2-clause BSD)
 ----------------------------------------------------------------------------
 
