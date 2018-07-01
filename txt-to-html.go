@@ -62,6 +62,7 @@ func footer(dir string) string {
 func main() {
 	var dir string
 	makeIndex := flag.Bool("i", false, "Generate index.html that lists the directory contents.")
+	clobber := flag.Bool("c", false, "From file.txt, output file.html instead of the default file.txt.html, silently overwritting file.html if it exists.")
 	flag.Parse()
 	switch len(flag.Args()) {
 	case 1:
@@ -87,12 +88,20 @@ func main() {
 			continue
 		}
 		if strings.HasSuffix(f.Name(), ".txt") || strings.HasSuffix(f.Name(), ".md") {
+			var fn string
 			b, err := ioutil.ReadFile(path.Join(dir, f.Name()))
 			if err != nil {
 				log.Println("error reading input file: ", err)
 			}
 			body := string(blackfriday.Run(b, blackfriday.WithExtensions(blackfriday.CommonExtensions|blackfriday.AutoHeadingIDs)))
-			o, err := os.Create(path.Join(dir, strings.Join([]string{f.Name(), "html"}, ".")))
+			if *clobber {
+				fn = strings.TrimSuffix(f.Name(), ".txt")
+				fn = strings.TrimSuffix(fn, ".md")
+				fmt.Println(fn)
+			} else {
+				fn = f.Name()
+			}
+			o, err := os.Create(path.Join(dir, strings.Join([]string{fn, "html"}, ".")))
 			if err != nil {
 				log.Println("error creating output file: ", err)
 			}
@@ -101,9 +110,9 @@ func main() {
 				log.Println("error writing to output file: ", err)
 			}
 			o.Close()
-		}
-		if *makeIndex && !strings.HasSuffix(f.Name(), ".txt") && !strings.HasSuffix(f.Name(), ".md") {
-			indexLinks = append(indexLinks, anchor(f.Name()))
+			if *makeIndex {
+				indexLinks = append(indexLinks, anchor(fn))
+			}
 		}
 	}
 
